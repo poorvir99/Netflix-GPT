@@ -1,11 +1,102 @@
-import { useState } from "react";
+import { useState,useRef } from "react";
 import Header from "./Header";
+import{checkValidData} from "../utils/Validate";
+import {createUserWithEmailAndPassword ,signInWithEmailAndPassword } from "firebase/auth";
+import {auth} from "../utils/firebase";
+import { useNavigate } from "react-router-dom";
+import { updateProfile } from "firebase/auth";
+import { useDispatch } from "react-redux";
+import { addUser } from "../utils/userSlice";
+
+
 const Login=()=>{
-    // Creating a hook-useState for state updation
+
+    // Creating a useState hook for state updation.
     const [isSignInForm,setIsSignInForm]=useState(true);
+
+    //error messgae for form validation
+    const [errorMessage,setErrorMessage]=useState(null);
+
+    const navigate=useNavigate();
+    const dispatch=useDispatch();
+
+    //creating useRef hook for form validation.
+    const name=useRef(null);
+    const email=useRef(null);
+    const password=useRef(null);
+
+    //For switching between sign in/sign up
     const toggleSignInForm=()=>{
       setIsSignInForm(!isSignInForm);
     };
+
+   //Validate the form data using useRef
+    const handleButtonClick=()=>{
+      // console.log(name);
+      // console.log(email.current.value);
+      // console.log(password.current.value); 
+     const message= checkValidData(email.current.value, password.current.value);
+     setErrorMessage(message);
+     if(message) return;
+
+        //sign in/sign up logic
+        if(!isSignInForm){
+         //sign up logic
+         createUserWithEmailAndPassword(auth, email.current.value, password.current.value)
+        .then((userCredential) => {
+          // Signed up 
+          const user = userCredential.user;
+          updateProfile(user, {
+            displayName: name.current.value,
+            photoURL: "https://lh3.google.com/u/0/ogw/AF2bZygRgJIy8gtlYem-S2GMZtvgR7S5wyT6iro2zc1RQh4w4A=s32-c-mo"
+          }).then(() => {
+            // Profile updated!
+            const {uid,email,displayName,photoURL} = auth.currentUser;
+            dispatch(
+              addUser({
+              uid:uid,
+              email:email,
+              displayName:displayName,
+              photoURL:photoURL
+            })
+          );
+            navigate("/browse");
+
+          }).catch((error) => {
+            // An error occurred
+           navigate("/error");
+          });
+          console.log(user);
+         
+          
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorCode+"-"+errorMessage);
+          
+        });
+        }
+
+        else{
+        //sign in logic
+        signInWithEmailAndPassword(auth,email.current.value, password.current.value)
+        .then((userCredential) => {
+          // Signed in 
+          const user = userCredential.user;
+          console.log(user);
+          navigate("/browse");
+          // ...
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorCode+"-"+errorMessage);
+        });
+        }
+
+   }
+
     return (
         <div>
         <Header/>
@@ -14,23 +105,39 @@ const Login=()=>{
             src="https://assets.nflxext.com/ffe/siteui/vlv3/a56dc29b-a0ec-4f6f-85fb-50df0680f80f/2f8ae902-8efe-49bb-9a91-51b6fcc8bf46/IN-en-20240617-popsignuptwoweeks-perspective_alpha_website_large.jpg"
              alt="bg-img"/>
         </div>
-          <form className=" w-[435px] absolute p-12 my-[77px] mx-auto right-0 left-0 bg-black  bg-opacity-65 text-white rounded-sm">
+
+          <form onSubmit={(e)=>e.preventDefault()} className=" w-[435px] absolute p-12 my-[77px] mx-auto right-0 left-0 bg-black  bg-opacity-65 text-white rounded-sm">
              <h1 className="font-bold text-3xl py-4  mx-[16px]">{isSignInForm ? "Sign In" : "Sign Up"}</h1>
              { !isSignInForm &&
-             (<input type="text" 
+             (<input
+              ref={name}
+               type="text" 
              placeholder="Full Name" 
-             className="p-[14px] mt-[18px] mx-[16px] mb-4 w-[300px] bg-slate-700 bg-opacity-50 border-[1px] border-solid border-gray-300 rounded-md"
+             className="p-[14px] mt-[18px] mx-[16px] w-[300px] bg-slate-700 bg-opacity-50 border-[1px] border-solid border-gray-300 rounded-md"
              />)
             }
-             <input type="text" 
+             <input 
+             ref={email}
+             type="text" 
              placeholder="Email or mobile number" 
              className="p-[14px] mt-[18px] mx-[16px] mb-4 w-[300px] bg-slate-700 bg-opacity-50 border-[1px] border-solid border-gray-300 rounded-md"
              />
-             <input type="password" 
+
+             <input
+             ref={password} 
+             type="password" 
              placeholder="Password" 
              className="p-[14px] mb-4 mx-[16px] w-[300px] bg-slate-700 bg-opacity-50 border-[1px] border-solid border-gray-300 rounded-md"
              />
-             <button className="p-2 mb-6 mx-[16px] bg-[#E50914]  w-[300px] rounded-md cursor-pointer">{isSignInForm ? "Sign In" : "Sign Up"}</button>
+              <p 
+               className="text-red-600 ml-[18px] mb-[16px] text-xs font-bold">{errorMessage}
+            </p>
+
+             <button 
+                 className="p-2 mb-6 mx-[16px] bg-[#E50914]  w-[300px] rounded-md cursor-pointer"
+                 onClick={handleButtonClick}>
+                 {isSignInForm ? "Sign In" : "Sign Up"}
+            </button>
 
              {/* <h3 className="text-center text-[#b0b0b0]">{isSignInForm ? "OR" : ""}</h3>
              <button className="p-2 mt-4  mx-[16px] mb-6 bg-[#808080] bg-opacity-45  w-[300px] rounded-md cursor-pointer {isSignInForm ? 'display:' : 'display:none'}">{isSignInForm ? "Use a sign in code" : ""}</button> */}
@@ -45,8 +152,15 @@ const Login=()=>{
             />
             <label class="p-2 mt-4 mb-6 ">Remember me</label>*/}
              
-            <h3 className="text-[#b0b0b0] mx-[16px] p-2 mt-4 mb-2">  {isSignInForm ? "New to Netflix? " : "Already a user?"}<span className="text-white font-bold cursor-pointer" onClick={toggleSignInForm}> {isSignInForm ? "Sign Up." : "Sign In."}</span></h3>
-            <p className="p-2 mx-[16px] text-[#b0b0b0] font-extralight text-xs text-start">This page is protected by Google reCAPTCHA to<br/>ensure you're not a bot.<span className="text-[#0044CC] cursor-pointer">Learn more.</span></p>
+            <h3 className="text-[#b0b0b0] mx-[16px] p-2 mt-4 mb-2"> 
+               {isSignInForm ? "New to Netflix? " : "Already a user?"}
+               <span className="text-white font-bold cursor-pointer" onClick={toggleSignInForm}>
+                 {isSignInForm ? "Sign Up." : "Sign In."}
+            </span></h3>
+            <p className="p-2 mx-[16px] text-[#b0b0b0] font-extralight text-xs text-start">
+              This page is protected by Google reCAPTCHA to<br/>ensure you're not a bot.
+              <span className="text-[#0044CC] cursor-pointer">Learn more.
+            </span></p>
           </form>
         </div>
     )
