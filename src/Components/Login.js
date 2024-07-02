@@ -97,7 +97,7 @@ const Login=()=>{
         <div>
         <Header/>
         <div className="absolute bg-gradient-to-b from-black to-[#000000]">
-            <img className=" h-full w-full object-cover opacity-40" 
+            <img className=" h-full w-screen object-cover opacity-40" 
             src={BG_PIC} alt="bg-img"/>
         </div>
 
