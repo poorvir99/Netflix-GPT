@@ -3,10 +3,10 @@ import Header from "./Header";
 import{checkValidData} from "../utils/Validate";
 import {createUserWithEmailAndPassword ,signInWithEmailAndPassword } from "firebase/auth";
 import {auth} from "../utils/firebase";
-import { useNavigate } from "react-router-dom";
 import { updateProfile } from "firebase/auth";
 import { useDispatch } from "react-redux";
 import { addUser } from "../utils/userSlice";
+import { BG_PIC, USER_AVATAR } from "../utils/constant";
 
 
 const Login=()=>{
@@ -17,7 +17,7 @@ const Login=()=>{
     //error messgae for form validation
     const [errorMessage,setErrorMessage]=useState(null);
 
-    const navigate=useNavigate();
+  
     const dispatch=useDispatch();
 
     //creating useRef hook for form validation.
@@ -48,7 +48,7 @@ const Login=()=>{
           const user = userCredential.user;
           updateProfile(user, {
             displayName: name.current.value,
-            photoURL: "https://lh3.google.com/u/0/ogw/AF2bZygRgJIy8gtlYem-S2GMZtvgR7S5wyT6iro2zc1RQh4w4A=s32-c-mo"
+            photoURL: USER_AVATAR
           }).then(() => {
             // Profile updated!
             const {uid,email,displayName,photoURL} = auth.currentUser;
@@ -60,14 +60,12 @@ const Login=()=>{
               photoURL:photoURL
             })
           );
-            navigate("/browse");
+            
 
           }).catch((error) => {
             // An error occurred
-           navigate("/error");
+           setErrorMessage(error.message);
           });
-          console.log(user);
-         
           
         })
         .catch((error) => {
@@ -84,9 +82,7 @@ const Login=()=>{
         .then((userCredential) => {
           // Signed in 
           const user = userCredential.user;
-          console.log(user);
-          navigate("/browse");
-          // ...
+
         })
         .catch((error) => {
           const errorCode = error.code;
@@ -101,9 +97,8 @@ const Login=()=>{
         <div>
         <Header/>
         <div className="absolute bg-gradient-to-b from-black to-[#000000]">
-            <img className=" h-full w-full object-cover opacity-40"
-            src="https://assets.nflxext.com/ffe/siteui/vlv3/a56dc29b-a0ec-4f6f-85fb-50df0680f80f/2f8ae902-8efe-49bb-9a91-51b6fcc8bf46/IN-en-20240617-popsignuptwoweeks-perspective_alpha_website_large.jpg"
-             alt="bg-img"/>
+            <img className=" h-full w-full object-cover opacity-40" 
+            src={BG_PIC} alt="bg-img"/>
         </div>
 
           <form onSubmit={(e)=>e.preventDefault()} className=" w-[435px] absolute p-12 my-[77px] mx-auto right-0 left-0 bg-black  bg-opacity-65 text-white rounded-sm">
