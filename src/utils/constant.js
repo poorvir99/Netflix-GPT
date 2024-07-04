@@ -23,5 +23,6 @@ export const API_OPTIONS= {
         {indentifier:"japanese",name:"Japanese"},
         {indentifier:"russian",name:"Russian"},
 
-
     ]
+
+    export const OPENAI_KEY="";
